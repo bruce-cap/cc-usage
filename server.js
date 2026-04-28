@@ -11,6 +11,6 @@ const server = createLiveReportServer({
 });
 
 server.listen(port, '127.0.0.1', () => {
-  console.log(`Token Watch listening on http://127.0.0.1:${port}`);
+  console.log(`cc-usage listening on http://127.0.0.1:${port}`);
   console.log(`Reading live data from ${path.resolve(sourceDir)}`);
 });

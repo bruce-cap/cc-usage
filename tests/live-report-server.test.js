@@ -7,7 +7,7 @@ const path = require('node:path');
 const { createLiveReportServer } = require('../src/live-report-server.js');
 
 async function withTempFixtureDir(run) {
-  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'token-watch-'));
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-usage-'));
   const sourceDir = path.join(tempRoot, 'projects');
   await fs.mkdir(sourceDir, { recursive: true });
   await fs.copyFile(

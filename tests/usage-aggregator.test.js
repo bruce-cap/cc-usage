@@ -105,7 +105,7 @@ test('summarizeWindow filters to recent days', () => {
 });
 
 test('aggregateUsageFromFiles can keep the last usage snapshot for duplicate assistant message ids', async () => {
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'token-watch-'));
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-usage-'));
   const fixture = path.join(tempDir, 'duplicate-assistant.jsonl');
 
   try {
@@ -165,7 +165,7 @@ test('aggregateUsageFromFiles can keep the last usage snapshot for duplicate ass
 });
 
 test('aggregateUsageFromFiles counts duplicate assistant snapshots in desktop-compatible mode', async () => {
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'token-watch-'));
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-usage-'));
   const fixture = path.join(tempDir, 'duplicate-assistant.jsonl');
 
   try {

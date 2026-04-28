@@ -1,6 +1,6 @@
-# Token Watch
+# cc-usage
 
-Token Watch 是一个轻量级的本地用量看板，用来查看 Claude Code 会话日志中的 token 使用情况。
+`cc-usage` 是一个轻量级的本地用量看板，用来查看 Claude Code 会话日志中的 token 使用情况。
 
 它会扫描本机 Claude 项目目录下的 `.jsonl` 日志文件，按日期和模型聚合用量数据，然后通过一个很小的本地 HTTP 服务，把结果展示在浏览器页面中。
 
@@ -8,7 +8,7 @@ Token Watch 是一个轻量级的本地用量看板，用来查看 Claude Code �
 
 这个项目主要用于解决一个很实际的问题：Claude Code 的本地日志里已经记录了模型调用和 token 用量，但默认并没有一个轻便、直观、适合日常查看的本地看板。
 
-Token Watch 目前提供这些能力：
+`cc-usage` 目前提供这些能力：
 
 - 递归读取 `~/.claude/projects` 下的本地会话日志
 - 按日期聚合 token 用量
