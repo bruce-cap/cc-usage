@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Claude Code Token Watch</title>
+    <style>
+      :root {
+        --bg: #f4efe8;
+        --panel: rgba(255, 255, 255, 0.75);
+        --panel-border: rgba(124, 98, 64, 0.16);
+        --text: #1e1a16;
+        --muted: #73675b;
+        --accent: #3870d8;
+        --accent-soft: #97b5f0;
+        --shadow: 0 24px 80px rgba(95, 76, 47, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(255, 214, 173, 0.45), transparent 32%),
+          linear-gradient(180deg, #fbf8f3 0%, var(--bg) 100%);
+      }
+
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 20px 64px;
+      }
+
+      h1 {
+        margin: 0 0 24px;
+        font-size: 42px;
+        font-weight: 650;
+        letter-spacing: -0.04em;
+      }
+
+      .sub {
+        color: var(--muted);
+        margin-bottom: 32px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(8px);
+        padding: 24px;
+      }
+
+      .toolbar,
+      .summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 0;
+        background: rgba(30, 26, 22, 0.06);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      button.active {
+        background: var(--text);
+        color: white;
+      }
+
+      button.secondary {
+        background: rgba(56, 112, 216, 0.12);
+        color: var(--accent);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin: 20px 0 28px;
+      }
+
+      .metric {
+        background: rgba(255, 255, 255, 0.62);
+        border: 1px solid rgba(124, 98, 64, 0.12);
+        border-radius: 18px;
+        padding: 16px;
+      }
+
+      .metric .label {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+
+      .metric .value {
+        font-size: 28px;
+        font-weight: 650;
+        letter-spacing: -0.03em;
+      }
+
+      .chart {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+        align-items: end;
+        gap: 10px;
+        min-height: 280px;
+        padding: 18px 0 8px;
+        border-bottom: 1px solid rgba(124, 98, 64, 0.14);
+      }
+
+      .bar-wrap {
+        display: grid;
+        gap: 8px;
+        justify-items: center;
+      }
+
+      .bar {
+        width: min(52px, 100%);
+        border-radius: 12px 12px 6px 6px;
+        background: linear-gradient(180deg, var(--accent-soft) 0%, var(--accent) 100%);
+        min-height: 4px;
+      }
+
+      .bar-label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .bar-value {
+        color: var(--text);
+        font-size: 12px;
+      }
+
+      .models {
+        margin-top: 28px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .model-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 80px;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(124, 98, 64, 0.09);
+      }
+
+      .model-row:last-child {
+        border-bottom: 0;
+      }
+
+      .model-name {
+        font-weight: 600;
+      }
+
+      .model-stats {
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .model-share {
+        text-align: right;
+        font-weight: 600;
+      }
+
+      .empty {
+        padding: 32px 0 8px;
+        color: var(--muted);
+      }
+
+      .toolbar-main {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      @media (max-width: 720px) {
+        h1 {
+          font-size: 32px;
+        }
+
+        .model-row {
+          grid-template-columns: 1fr;
+        }
+
+        .model-stats,
+        .model-share {
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <h1>近期模型用量概览</h1>
+      <div class="sub">实时读取 C:\Users\Cap\.claude\projects 的本地会话日志</div>
+      <section class="panel">
+        <div class="toolbar">
+          <div class="toolbar-main">
+            <div class="buttons">
+              <button data-window="all" class="active">All</button>
+              <button data-window="days30">30d</button>
+              <button data-window="days7">7d</button>
+            </div>
+            <button data-action="refresh" class="secondary">刷新</button>
+          </div>
+          <div id="meta" class="meta"></div>
+        </div>
+        <div id="metrics" class="metrics"></div>
+        <div id="chart" class="chart"></div>
+        <div id="models" class="models"></div>
+        <div id="empty" class="empty" hidden>没有找到可聚合的用量记录。</div>
+      </section>
+    </main>
+    <script>
+      const numberFmt = new Intl.NumberFormat('en-US');
+      const percentFmt = new Intl.NumberFormat('en-US', {
+        style: 'percent',
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      });
+      const moneyFmt = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+      function compactNumber(value) {
+        if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+        if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+        return String(value);
+      }
+
+      function renderMetrics(report, daily) {
+        const totalTokens = daily.reduce((sum, item) => sum + item.totalTokens, 0);
+        const totalInputTokens = daily.reduce((sum, item) => sum + item.totalInputTokens, 0);
+        const totalOutputTokens = daily.reduce((sum, item) => sum + item.totalOutputTokens, 0);
+        const totalCostUsd = daily.reduce((sum, item) => sum + item.totalCostUsd, 0);
+        const metrics = [
+          ['总 Token', compactNumber(totalTokens)],
+          ['输入', compactNumber(totalInputTokens)],
+          ['输出', compactNumber(totalOutputTokens)],
+          ['成本', moneyFmt.format(totalCostUsd)],
+        ];
+
+        document.getElementById('metrics').innerHTML = metrics
+          .map(
+            ([label, value]) => `
+              <div class="metric">
+                <div class="label">${label}</div>
+                <div class="value">${value}</div>
+              </div>
+            `,
+          )
+          .join('');
+      }
+
+      function renderChart(daily) {
+        const chart = document.getElementById('chart');
+        const max = Math.max(...daily.map((item) => item.totalTokens), 0);
+        chart.innerHTML = daily
+          .map((item) => {
+            const height = max === 0 ? 4 : Math.max(4, Math.round((item.totalTokens / max) * 220));
+            return `
+              <div class="bar-wrap" title="${item.date} ${numberFmt.format(item.totalTokens)} tokens">
+                <div class="bar-value">${compactNumber(item.totalTokens)}</div>
+                <div class="bar" style="height:${height}px"></div>
+                <div class="bar-label">${item.date.slice(5)}</div>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      function renderModels(report) {
+        document.getElementById('models').innerHTML = report.models
+          .map(
+            (item) => `
+              <div class="model-row">
+                <div class="model-name">${item.model}</div>
+                <div class="model-stats">
+                  ${compactNumber(item.inputTokens)} in ·
+                  ${compactNumber(item.outputTokens)} out
+                </div>
+                <div class="model-share">${percentFmt.format(item.share)}</div>
+              </div>
+            `,
+          )
+          .join('');
+      }
+
+      function setMeta(text) {
+        document.getElementById('meta').textContent = text;
+      }
+
+      function render(payload, windowKey) {
+        const daily = payload.windows[windowKey];
+        const hasData = daily.length > 0;
+        document.getElementById('empty').hidden = hasData;
+        document.getElementById('chart').hidden = !hasData;
+        document.getElementById('models').hidden = !hasData;
+        document.getElementById('metrics').hidden = !hasData;
+
+        if (!hasData) {
+          return;
+        }
+
+        renderMetrics(payload.report, daily);
+        renderChart(daily);
+        renderModels(payload.report);
+
+        setMeta(
+          `Generated ${new Date(payload.generatedAt).toLocaleString()} · ${payload.report.summary.fileCount} files`,
+        );
+      }
+
+      async function loadPayload() {
+        const response = await fetch('/api/report', { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      }
+
+      async function main() {
+        let windowKey = 'all';
+        let payload = null;
+        const refreshButton = document.querySelector('[data-action="refresh"]');
+
+        async function refresh() {
+          refreshButton.disabled = true;
+          setMeta('Refreshing...');
+          payload = await loadPayload();
+          render(payload, windowKey);
+          refreshButton.disabled = false;
+        }
+
+        document.querySelectorAll('[data-window]').forEach((button) => {
+          button.addEventListener('click', () => {
+            windowKey = button.dataset.window;
+            document.querySelectorAll('[data-window]').forEach((item) => item.classList.remove('active'));
+            button.classList.add('active');
+            if (payload) {
+              render(payload, windowKey);
+            }
+          });
+        });
+
+        refreshButton.addEventListener('click', async () => {
+          try {
+            await refresh();
+          } catch (error) {
+            refreshButton.disabled = false;
+            document.getElementById('empty').hidden = false;
+            document.getElementById('empty').textContent = `刷新失败: ${error.message}`;
+            setMeta('Refresh failed');
+          }
+        });
+
+        await refresh();
+      }
+
+      main().catch((error) => {
+        document.getElementById('empty').hidden = false;
+        document.getElementById('empty').textContent = `加载实时数据失败: ${error.message}`;
+        setMeta('Load failed');
+      });
+    </script>
+  </body>
+</html>

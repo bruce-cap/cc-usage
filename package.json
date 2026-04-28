@@ -1,0 +1,11 @@
+{
+  "name": "token-watch",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Live dashboard for Claude Code local token usage.",
+  "scripts": {
+    "start": "node server.js",
+    "build:report": "node scripts/build-report.js",
+    "test": "node --test tests/*.test.js"
+  }
+}
