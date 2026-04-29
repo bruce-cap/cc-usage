@@ -7,7 +7,7 @@ const path = require('node:path');
 const {
   aggregateUsageFromFiles,
   summarizeWindow,
-} = require('../src/usage-aggregator.js');
+} = require('../src/core/usage-aggregator.js');
 
 test('aggregateUsageFromFiles groups result records by day and model', async () => {
   const fixture = path.join(__dirname, 'fixtures', 'sample-session.jsonl');

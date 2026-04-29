@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 
-const { createLiveReportServer } = require('../src/live-report-server.js');
+const { createLiveReportServer } = require('../src/legacy/live-report-server.js');
 
 async function withTempFixtureDir(run) {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'cc-usage-'));

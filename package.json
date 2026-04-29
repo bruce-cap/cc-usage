@@ -3,9 +3,43 @@
   "version": "0.1.0",
   "private": true,
   "description": "Local dashboard for Claude Code usage aggregation.",
+  "main": "./src/extension.js",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "activationEvents": [
+    "onView:ccUsage.sidebarView",
+    "onCommand:ccUsage.refresh"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ccUsage",
+          "title": "CC Usage",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ccUsage": [
+        {
+          "id": "ccUsage.sidebarView",
+          "name": "Usage Dashboard",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "ccUsage.refresh",
+        "title": "CC Usage: Refresh"
+      }
+    ]
+  },
   "scripts": {
     "start": "node server.js",
     "build:report": "node scripts/build-report.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests"
   }
 }

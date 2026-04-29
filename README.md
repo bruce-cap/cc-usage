@@ -2,7 +2,12 @@
 
 `cc-usage` 是一个轻量级的本地用量看板，用来查看 Claude Code 会话日志中的 token 使用情况。
 
-它会扫描本机 Claude 项目目录下的 `.jsonl` 日志文件，按日期和模型聚合用量数据，然后通过一个很小的本地 HTTP 服务，把结果展示在浏览器页面中。
+它现在同时支持两种运行方式：
+
+- VS Code 侧边栏插件模式
+- 本地 HTTP 服务的旧版浏览器模式
+
+两种模式都使用同一套本地日志聚合核心，默认读取 `~/.claude/projects`。
 
 ## 项目简介
 
@@ -15,20 +20,22 @@
 - 按模型聚合 token 用量
 - 展示输入、输出和总 token 数
 - 提供全部、近 30 天、近 7 天等时间窗口视图
-- 通过本地 API 支持页面刷新和实时重载
+- 在 VS Code 侧边栏中查看用量仪表盘
+- 支持手动刷新和 2 分钟自动刷新
+- 通过本地 API 支持旧版浏览器页面刷新和实时重载
 - 支持导出聚合后的 JSON 报表和静态 HTML 构建产物
 
 ## 当前状态
 
-这个仓库目前还是一个偏早期的本地工具原型。
+这个仓库目前已经进入“本地插件原型”阶段。
 
-当前最完整、最稳定的使用方式是本地 HTTP 服务模式：
+当前推荐的使用方式是 VS Code 插件开发模式：
 
 1. 启动本地服务
-2. 在浏览器中打开看板页面
-3. 实时读取并聚合指定目录下的日志数据
+2. 在 Extension Development Host 中打开 `CC Usage`
+3. 在侧边栏直接查看实时聚合后的本地用量数据
 
-仓库里也已经包含静态构建脚本，但当前前端页面主要还是围绕 `/api/report` 这条实时接口来工作的。因此，导出的静态 HTML 目前更像构建产物，而不是一个完全独立、离线可直接使用的报表查看器。
+同时，仓库里仍然保留旧版浏览器模式和静态构建脚本，方便调试、对照和兼容使用。
 
 ## 快速开始
 
@@ -38,7 +45,15 @@
 
 当前项目只使用 Node.js 内置模块，不依赖额外的第三方包，因此不需要安装依赖。
 
-### 启动实时看板
+### 启动 VS Code 插件开发模式
+
+1. 用 VS Code 打开本仓库
+2. 按 `F5`
+3. 在新打开的 Extension Development Host 窗口中，点击 Activity Bar 里的 `CC Usage`
+4. 侧边栏会默认读取 `~/.claude/projects`
+5. 面板支持手动刷新，并会每 2 分钟自动刷新一次
+
+### 启动旧版浏览器模式
 
 ```bash
 node server.js
@@ -57,7 +72,7 @@ node server.js 3001 C:\path\to\projects
 
 如果源目录以 `~/` 开头，程序会自动把它展开为当前用户的 home 目录。
 
-### 构建报表产物
+### 构建静态报表产物
 
 ```bash
 node scripts/build-report.js
@@ -81,7 +96,7 @@ node scripts/build-report.js C:\path\to\projects C:\path\to\output
 ```bash
 node server.js
 node scripts/build-report.js
-node --test tests/*.test.js
+node --test tests
 ```
 
 如果你更喜欢通过 `package.json` 脚本运行：
@@ -96,7 +111,7 @@ npm test
 
 ### 数据来源
 
-服务会递归扫描配置目录下的 `.jsonl` 文件，默认目录是：
+插件和旧版服务都会递归扫描配置目录下的 `.jsonl` 文件，默认目录是：
 
 ```text
 ~/.claude/projects
@@ -123,7 +138,13 @@ npm test
 - 近 30 天
 - 近 7 天
 
-### 本地服务
+### VS Code 插件结构
+
+- `src/core/`：可复用的日志聚合核心
+- `src/webview/`：VS Code 侧边栏视图接入层
+- `media/`：侧边栏页面的静态资源
+
+### 旧版本地服务
 
 本地 HTTP 服务目前提供两个主要入口：
 
@@ -136,16 +157,34 @@ npm test
 .
 ├─ public/
 │  └─ index.html
+├─ media/
+│  ├─ icon.svg
+│  ├─ view.css
+│  └─ view.js
 ├─ scripts/
 │  └─ build-report.js
 ├─ src/
-│  ├─ live-report-server.js
-│  ├─ report-payload.js
-│  └─ usage-aggregator.js
+│  ├─ core/
+│  │  ├─ path-utils.js
+│  │  ├─ report-payload.js
+│  │  └─ usage-aggregator.js
+│  ├─ legacy/
+│  │  └─ live-report-server.js
+│  ├─ webview/
+│  │  ├─ usage-view-provider.js
+│  │  └─ webview-template.js
+│  └─ extension.js
 ├─ tests/
 │  ├─ fixtures/
+│  ├─ extension-metadata.test.js
 │  ├─ live-report-server.test.js
+│  ├─ path-utils.test.js
+│  ├─ report-payload.test.js
+│  ├─ usage-view-provider.test.js
 │  └─ usage-aggregator.test.js
+├─ .vscode/
+│  ├─ launch.json
+│  └─ tasks.json
 ├─ server.js
 └─ package.json
 ```
@@ -154,32 +193,38 @@ npm test
 
 - 项目刻意保持轻量，当前只依赖 Node.js 内置模块
 - 前端页面使用原生 HTML、CSS 和 JavaScript，没有引入前端框架
-- 当前实现优先服务本地个人使用场景，还没有按通用生产部署方向去做扩展
+- 当前实现优先服务本地个人使用场景，先以插件开发和本机验证为主
 
 ## 测试
 
 运行测试：
 
 ```bash
-node --test tests/*.test.js
+node --test tests
 ```
 
 当前测试覆盖了这些核心路径：
 
+- 扩展元数据和侧边栏 Provider 暴露
 - 按日期和模型聚合用量
+- 报表 payload 装配
 - 最近时间窗口过滤
 - 重复 assistant 快照记录的处理
 - `/` 和 `/api/report` 的服务端响应
 
 ## 已知限制
 
-- 当前主路径是本地实时服务模式，不是完全独立的离线 HTML 报表模式
-- 当前前端默认假设数据来自 `/api/report`
+- 当前首版主要面向本地桌面版 VS Code
+- 当前没有提供自定义日志目录配置，默认固定读取 `~/.claude/projects`
+- 当前旧版浏览器模式仍然依赖 `/api/report`
 - 成本数据是否完整，取决于源日志记录中是否包含对应字段
 - 这个工具依赖当前 Claude 本地日志的结构，如果上游日志格式发生变化，聚合逻辑可能需要调整
 
 ## 后续可扩展方向
 
+- 增加插件设置项，支持自定义日志目录
+- 补更完整的侧边栏主题适配和 UI 打磨
+- 发布为可安装的 VS Code 扩展包
 - 把静态导出做成真正可离线打开的完整报表
 - 增加更丰富的图表和拆分维度
 - 支持更多筛选条件

@@ -1,12 +1,11 @@
 const fs = require('node:fs/promises');
-const os = require('node:os');
 const path = require('node:path');
 
-const { buildReportPayload } = require('../src/report-payload.js');
-const { resolveHomePath } = require('../src/live-report-server.js');
+const { buildReportPayload } = require('../src/core/report-payload.js');
+const { getDefaultClaudeProjectsPath, resolveHomePath } = require('../src/core/path-utils.js');
 
 async function main() {
-  const sourceDir = resolveHomePath(process.argv[2]) || path.join(os.homedir(), '.claude', 'projects');
+  const sourceDir = resolveHomePath(process.argv[2]) || getDefaultClaudeProjectsPath();
   const outputDir = process.argv[3]
     ? path.resolve(process.argv[3])
     : path.join(process.cwd(), 'dist');

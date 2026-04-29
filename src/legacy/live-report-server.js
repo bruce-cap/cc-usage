@@ -1,21 +1,9 @@
 const fs = require('node:fs/promises');
 const http = require('node:http');
-const os = require('node:os');
 const path = require('node:path');
 
-const { buildReportPayload } = require('./report-payload.js');
-
-function resolveHomePath(input) {
-  if (!input) {
-    return input;
-  }
-
-  if (input.startsWith('~/')) {
-    return path.join(os.homedir(), input.slice(2));
-  }
-
-  return input;
-}
+const { buildReportPayload } = require('../core/report-payload.js');
+const { getDefaultClaudeProjectsPath, resolveHomePath } = require('../core/path-utils.js');
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
@@ -35,7 +23,7 @@ function sendText(response, statusCode, contentType, body) {
 
 function createLiveReportServer(options = {}) {
   const sourceDir = path.resolve(
-    resolveHomePath(options.sourceDir) || path.join(os.homedir(), '.claude', 'projects'),
+    resolveHomePath(options.sourceDir) || getDefaultClaudeProjectsPath(),
   );
   const publicDir = path.resolve(options.publicDir || path.join(process.cwd(), 'public'));
 
@@ -68,5 +56,4 @@ function createLiveReportServer(options = {}) {
 
 module.exports = {
   createLiveReportServer,
-  resolveHomePath,
 };

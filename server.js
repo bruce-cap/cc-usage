@@ -1,9 +1,10 @@
 const path = require('node:path');
 
-const { createLiveReportServer, resolveHomePath } = require('./src/live-report-server.js');
+const { createLiveReportServer } = require('./src/legacy/live-report-server.js');
+const { getDefaultClaudeProjectsPath, resolveHomePath } = require('./src/core/path-utils.js');
 
 const port = Number(process.env.PORT || process.argv[2] || 3000);
-const sourceDir = resolveHomePath(process.argv[3]) || path.join(require('node:os').homedir(), '.claude', 'projects');
+const sourceDir = resolveHomePath(process.argv[3]) || getDefaultClaudeProjectsPath();
 
 const server = createLiveReportServer({
   sourceDir,
