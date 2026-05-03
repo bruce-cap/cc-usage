@@ -3,6 +3,7 @@ node_modules/
 dist/
 dist-check/
 coverage/
+docs/
 
 *.log
 npm-debug.log*
